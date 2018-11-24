@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func initDB() *sql.DB {
@@ -16,7 +17,7 @@ func initDB() *sql.DB {
 }
 
 func Equal(a *User, b *User) bool {
-	return (a.Id == b.Id && a.Login == b.Login && a.CreatedAt == b.CreatedAt)
+	return (a.ID == b.ID && a.Login == b.Login && a.CreatedAt == b.CreatedAt)
 }
 
 func TestValidCreate(t *testing.T) {
@@ -40,14 +41,14 @@ func TestValidCreate(t *testing.T) {
 		t.Errorf(err.Error())
 		return
 	}
-	testById := &User{}
-	err = um.GetUserById(&UsersId{test.Id}, testById)
+	testByID := &User{}
+	err = um.GetUserByID(&UsersID{test.ID}, testByID)
 	if err != nil {
 		t.Errorf(err.Error())
 		return
 	}
-	if !Equal(testById, testByLogin) {
-		t.Errorf("user selected by Id != user selected by Login")
+	if !Equal(testByID, testByLogin) {
+		t.Errorf("user selected by ID != user selected by Login")
 		return
 	}
 	_, err = db.Exec("TRUNCATE TABLE users")
@@ -68,7 +69,7 @@ func TestValidEdit(t *testing.T) {
 		return
 	}
 	test.Login = "another_test"
-	test.CreatedAt = 88005553535
+	test.CreatedAt = float64(time.Now().Unix())
 	testEdited := &User{}
 	err = um.EditUser(test, testEdited)
 	if err != nil {
@@ -92,7 +93,7 @@ func TestShortLoginCreate(t *testing.T) {
 	in := &UsersLogin{Login: "tes"}
 	test := &User{}
 	err := um.CreateUser(in, test)
-	if err == nil || err.Error() != ShortLogin {
+	if err == nil || err != ErrShortLogin {
 		t.Errorf(err.Error())
 		return
 	}
@@ -107,7 +108,7 @@ func TestUserByLoginNotFound(t *testing.T) {
 	um := NewUserManager(db)
 	test := &User{}
 	err := um.GetUserByLogin(&UsersLogin{Login: "test"}, test)
-	if err == nil || err.Error() != NotFound {
+	if err == nil || err != ErrNotFound {
 		t.Errorf("unexisting user found or error occured")
 		return
 	}
@@ -116,13 +117,13 @@ func TestUserByLoginNotFound(t *testing.T) {
 		panic(err.Error())
 	}
 }
-func TestUserByIdNotFound(t *testing.T) {
+func TestUserByIDNotFound(t *testing.T) {
 	db := initDB()
 	defer db.Close()
 	um := NewUserManager(db)
 	test := &User{}
-	err := um.GetUserById(&UsersId{Id: "550e8400-e29b-41d4-a716-446655440000"}, test)
-	if err == nil || err.Error() != NotFound {
+	err := um.GetUserByID(&UsersID{ID: "550e8400-e29b-41d4-a716-446655440000"}, test)
+	if err == nil || err != ErrNotFound {
 		t.Errorf("unexisting user found or db error occured")
 		return
 	}
@@ -143,7 +144,7 @@ func TestUserAlreadyExists(t *testing.T) {
 		return
 	}
 	err = um.CreateUser(in, test)
-	if err == nil || err.Error() != AlreadyExists {
+	if err == nil || err != ErrAlreadyExists {
 		t.Errorf("user created twice")
 		return
 	}
@@ -174,7 +175,7 @@ func TestUserEditAlreadyExists(t *testing.T) {
 	dummy := &User{}
 	anotherTest.Login = "test"
 	err = um.EditUser(anotherTest, dummy)
-	if err == nil || err.Error() != AlreadyExists {
+	if err == nil || err != ErrAlreadyExists {
 		t.Errorf("user login changed to login of another user or db error occured")
 	}
 	_, err = db.Exec("TRUNCATE TABLE users")
@@ -189,12 +190,12 @@ func TestUnexistingEdit(t *testing.T) {
 	um := NewUserManager(db)
 	in := &User{
 		Login:     "test",
-		Id:        "550e8400-e29b-41d4-a716-446655440000",
-		CreatedAt: 88005553535,
+		ID:        "550e8400-e29b-41d4-a716-446655440000",
+		CreatedAt: float64(time.Now().Unix()),
 	}
 	test := &User{}
 	err := um.EditUser(in, test)
-	if err == nil || err.Error() != NotFound {
+	if err == nil || err != ErrNotFound {
 		t.Errorf("edited unexisting user")
 		return
 	}

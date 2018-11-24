@@ -17,21 +17,21 @@ const (
 	DB_NAME     = "docker"
 )
 
-type HttpConn struct {
+type HTTPConn struct {
 	in  io.Reader
 	out io.Writer
 }
 
-func (c *HttpConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
-func (c *HttpConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
-func (c *HttpConn) Close() error                      { return nil }
+func (c *HTTPConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
+func (c *HTTPConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
+func (c *HTTPConn) Close() error                      { return nil }
 
 type Handler struct {
 	rpcServer *rpc.Server
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	serverCodec := jsonrpc.NewServerCodec(&HttpConn{
+	serverCodec := jsonrpc.NewServerCodec(&HTTPConn{
 		in:  r.Body,
 		out: w,
 	})
