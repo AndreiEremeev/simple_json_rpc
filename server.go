@@ -1,12 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"io"
 	"log"
 	"net/http"
 	"net/rpc"
 	"net/rpc/jsonrpc"
+)
+
+const (
+	DB_USER     = "docker"
+	DB_PASSWORD = "docker"
+	DB_NAME     = "docker"
 )
 
 type HttpConn struct {
@@ -35,7 +43,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	userManager := NewUserManager()
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME)
+	db, err := sql.Open("postgres", dbinfo)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+	userManager := NewUserManager(db)
 
 	server := rpc.NewServer()
 	server.Register(userManager)
