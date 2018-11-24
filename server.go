@@ -38,7 +38,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	err := h.rpcServer.ServeRequest(serverCodec)
 	if err != nil {
-		log.Printf("Error while serving JSON request: %v", err)
+		log.Println(err.Error())
 	}
 }
 
@@ -60,5 +60,5 @@ func main() {
 	http.Handle("/rpc", userHandler)
 
 	fmt.Println("starting server at :8081")
-	http.ListenAndServe(":8081", nil)
+	panic(http.ListenAndServe(":8081", nil))
 }
